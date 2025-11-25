@@ -1,9 +1,18 @@
 const gameContainer = document.getElementById('gameContainer');
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+
+// Screens
+const mainMenu = document.getElementById('mainMenu');
+const stageSelect = document.getElementById('stageSelect');
+const stageButtons = document.getElementById('stageButtons');
+const leaderboardScreen = document.getElementById('leaderboardScreen');
+const leaderboardList = document.getElementById('leaderboardList');
 const gameOverScreen = document.getElementById('gameOverScreen');
 const clearScreen = document.getElementById('clearScreen');
 const endingScreen = document.getElementById('endingScreen');
+
+// HUD
 const stageText = document.getElementById('stageText');
 const dashText = document.getElementById('dashText');
 const timerText = document.getElementById('timerText');
@@ -12,14 +21,18 @@ const centerMsg = document.getElementById('centerMsg');
 const clearTimeResult = document.getElementById('clearTimeResult');
 const clearTitle = document.getElementById('clearTitle');
 const nextBtn = document.getElementById('nextBtn');
+const audioBtn = document.getElementById('audioBtn');
 
-let gameState = 'playing';
+// Managers
+const saveManager = new SaveManager();
+const audioManager = new AudioManager();
+
+let gameState = 'menu'; // menu, playing, gameover, clear, ending
 let frameCount = 0;
 let score = 0;
 let cameraX = 0;
 let currentStage = 1;
 let startTime = 0;
-let bestRecords = {};
 
 // 체크포인트 변수 (6스테이지용)
 let checkpointActive = false;
@@ -91,10 +104,10 @@ function checkAttackHit() {
         const facingTarget = (player.facingRight && dirToEnemy > 0) || (!player.facingRight && dirToEnemy < 0);
 
         if (dist < range && facingTarget) {
-            // 파티 모드에서는 죽이지 않고 점수만? 아니면 그냥 터짐 (폭죽처럼)
             enemy.alive = false;
             createParticles(enemy.x, enemy.y, 20, enemy.passive ? getRandomColor() : '#f00');
             score += 100;
+            audioManager.playExplosion();
         }
     });
     bullets.forEach(b => {
@@ -108,6 +121,81 @@ function createParticles(x, y, count, color) {
     for (let i = 0; i < count; i++) particles.push(new Particle(x, y, color));
 }
 
+// --- Menu Functions ---
+
+function showMainMenu() {
+    gameState = 'menu';
+    mainMenu.style.display = 'flex';
+    gameOverScreen.style.display = 'none';
+    clearScreen.style.display = 'none';
+    endingScreen.style.display = 'none';
+    leaderboardScreen.style.display = 'none';
+    gameContainer.classList.remove('glitch-active');
+}
+
+function startGame(stage = 1) {
+    if (stage > saveManager.getUnlockedStages()) return;
+    currentStage = stage;
+    mainMenu.style.display = 'none';
+    stageSelect.style.display = 'none';
+    initLevel(currentStage);
+}
+
+function showStageSelect() {
+    const unlocked = saveManager.getUnlockedStages();
+    stageButtons.innerHTML = '';
+    for (let i = 1; i <= 10; i++) {
+        const btn = document.createElement('div');
+        btn.className = `stage-btn ${i <= unlocked ? 'unlocked' : 'locked'}`;
+        btn.innerText = i;
+        if (i <= unlocked) {
+            btn.onclick = () => startGame(i);
+        }
+        stageButtons.appendChild(btn);
+    }
+    stageSelect.style.display = 'block';
+}
+
+function hideStageSelect() {
+    stageSelect.style.display = 'none';
+}
+
+function showLeaderboard() {
+    mainMenu.style.display = 'none';
+    leaderboardScreen.style.display = 'flex';
+    leaderboardList.innerHTML = '';
+
+    const bestTimes = saveManager.data.bestTimes;
+    let hasData = false;
+    for (let i = 1; i <= 10; i++) {
+        if (bestTimes[i]) {
+            hasData = true;
+            const row = document.createElement('div');
+            row.className = 'leaderboard-row';
+            row.innerHTML = `<span>STAGE ${i}</span> <span>${bestTimes[i].toFixed(2)}s</span>`;
+            leaderboardList.appendChild(row);
+        }
+    }
+
+    if (!hasData) {
+        leaderboardList.innerHTML = '<div style="text-align:center; color:#555;">NO RECORDS YET</div>';
+    }
+}
+
+function hideLeaderboard() {
+    leaderboardScreen.style.display = 'none';
+    mainMenu.style.display = 'flex';
+}
+
+function toggleAudio() {
+    const enabled = audioManager.toggleMute();
+    audioBtn.innerText = `AUDIO: ${enabled ? 'ON' : 'OFF'}`;
+    audioBtn.style.color = enabled ? '#0ff' : '#555';
+    audioBtn.style.borderColor = enabled ? '#0ff' : '#555';
+}
+
+// --- Game Logic ---
+
 function initLevel(stage) {
     platforms = []; enemies = []; bullets = []; particles = [];
     player = new Player();
@@ -115,14 +203,17 @@ function initLevel(stage) {
     platforms.push({ x: 0, y: 400, w: 400, h: 50 });
     startPoint = { x: 50, y: 300, w: 50, h: 100 };
 
-    const titles = ["TUTORIAL", "LONG RUN", "ORIGINS", "SKY PLATFORMS", "NO FLOOR", "NIGHTMARE", "PARTY TIME!"];
+    const titles = [
+        "TUTORIAL", "LONG RUN", "ORIGINS", "SKY PLATFORMS", "NO FLOOR",
+        "NIGHTMARE", "PARTY TIME!", "THE ASCENT", "VOID WALKER", "FINAL PROTOCOL"
+    ];
     stageText.innerText = `STAGE ${stage}: ${titles[stage - 1] || "UNKNOWN"}`;
     centerMsg.innerText = `STAGE ${stage}`;
     centerMsg.style.opacity = 1;
 
     if (stage === 7) {
         centerMsg.style.color = "#f0f"; // 핑크
-        centerMsg.innerText = "CONGRATULATIONS!";
+        centerMsg.innerText = "BONUS STAGE!";
     } else {
         centerMsg.style.color = "#fff";
     }
@@ -137,6 +228,7 @@ function initLevel(stage) {
         setTimeout(() => centerMsg.style.opacity = 0, 1500);
     }
 
+    // Level Design
     if (stage === 1) {
         platforms.push({ x: 500, y: 350, w: 200, h: 20 });
         enemies.push(new Enemy(600, 310));
@@ -190,7 +282,7 @@ function initLevel(stage) {
         endPoint = { x: 1400, y: 300, w: 50, h: 100 };
     }
     else if (stage === 6) {
-        // NIGHTMARE REFORGED (체크포인트 유지)
+        // NIGHTMARE REFORGED
         platforms.push({ x: 450, y: 400, w: 50, h: 20 });
         platforms.push({ x: 600, y: 350, w: 40, h: 20 });
         platforms.push({ x: 750, y: 300, w: 40, h: 20 });
@@ -223,13 +315,61 @@ function initLevel(stage) {
         endPoint = { x: 4700, y: 300, w: 50, h: 100 };
     }
     else if (stage === 7) {
-        // STAGE 7: PARTY TIME (이스터 에그)
+        // STAGE 7: PARTY TIME (Bonus)
         platforms.push({ x: 400, y: 400, w: 2500, h: 50 });
         for (let i = 0; i < 30; i++) {
-            // passive = true (공격 안함, 점프 함)
             enemies.push(new Enemy(600 + i * 80, 360, true));
         }
         endPoint = { x: 2800, y: 300, w: 50, h: 100 };
+    }
+    else if (stage === 8) {
+        // THE ASCENT (Verticality)
+        platforms.push({ x: 0, y: 400, w: 400, h: 50 });
+        platforms.push({ x: 400, y: 300, w: 100, h: 20 });
+        platforms.push({ x: 600, y: 200, w: 100, h: 20 });
+        enemies.push(new Enemy(620, 160));
+        platforms.push({ x: 800, y: 100, w: 100, h: 20 });
+        platforms.push({ x: 1000, y: 200, w: 20, h: 300 }); // Wall
+        platforms.push({ x: 1200, y: 400, w: 200, h: 50 });
+        enemies.push(new Enemy(1300, 360));
+        platforms.push({ x: 1500, y: 300, w: 50, h: 20, moving: true, vx: 0, vy: 3, minY: 100, maxY: 350 });
+        platforms.push({ x: 1700, y: 200, w: 50, h: 20, moving: true, vx: 0, vy: -3, minY: 50, maxY: 300 });
+        platforms.push({ x: 1900, y: 400, w: 300, h: 50 });
+        endPoint = { x: 2100, y: 300, w: 50, h: 100 };
+    }
+    else if (stage === 9) {
+        // VOID WALKER (Precise jumps)
+        platforms.push({ x: 0, y: 400, w: 200, h: 50 });
+        platforms.push({ x: 300, y: 400, w: 50, h: 20 });
+        platforms.push({ x: 500, y: 350, w: 50, h: 20 });
+        platforms.push({ x: 700, y: 300, w: 50, h: 20 });
+        enemies.push(new Enemy(710, 260));
+        platforms.push({ x: 900, y: 250, w: 50, h: 20 });
+        platforms.push({ x: 1100, y: 300, w: 50, h: 20 });
+        platforms.push({ x: 1300, y: 350, w: 50, h: 20 });
+        platforms.push({ x: 1500, y: 400, w: 200, h: 50 });
+        enemies.push(new Enemy(1600, 360));
+        platforms.push({ x: 1800, y: 250, w: 20, h: 200 }); // Wall jump test
+        platforms.push({ x: 2000, y: 150, w: 20, h: 200 });
+        platforms.push({ x: 2200, y: 400, w: 200, h: 50 });
+        endPoint = { x: 2300, y: 300, w: 50, h: 100 };
+    }
+    else if (stage === 10) {
+        // FINAL PROTOCOL (Mix of everything)
+        platforms.push({ x: 0, y: 400, w: 400, h: 50 });
+        platforms.push({ x: 500, y: 350, w: 100, h: 20, moving: true, vx: 3, min: 500, max: 700 });
+        enemies.push(new Enemy(520, 310));
+        platforms.push({ x: 800, y: 250, w: 20, h: 300 });
+        platforms.push({ x: 1000, y: 100, w: 20, h: 300 });
+        platforms.push({ x: 1200, y: 400, w: 200, h: 50 });
+        enemies.push(new Enemy(1300, 360));
+        platforms.push({ x: 1500, y: 300, w: 50, h: 20 });
+        platforms.push({ x: 1700, y: 200, w: 50, h: 20 });
+        platforms.push({ x: 1900, y: 100, w: 50, h: 20 });
+        platforms.push({ x: 2100, y: 400, w: 500, h: 50 });
+        enemies.push(new Enemy(2200, 360));
+        enemies.push(new Enemy(2400, 360));
+        endPoint = { x: 2500, y: 300, w: 50, h: 100 };
     }
 
     startTime = Date.now();
@@ -365,22 +505,28 @@ function die() {
     gameState = 'gameover';
     createParticles(player.x, player.y, 50, '#0ff');
     gameOverScreen.style.display = 'flex';
+    audioManager.playDie();
 }
 
 function stageClear() {
     if (gameState !== 'playing') return;
     gameState = 'clear';
     let t = (Date.now() - startTime) / 1000;
-    if (!bestRecords[currentStage] || t < bestRecords[currentStage]) {
-        bestRecords[currentStage] = t;
-    }
-    bestText.innerText = `BEST: ${bestRecords[currentStage].toFixed(2)}`;
-    clearTimeResult.innerText = `TIME: ${t.toFixed(2)}s`;
+
+    // Save Data
+    const isNewRecord = saveManager.saveTime(currentStage, t);
+    saveManager.unlockStage(currentStage + 1);
+
+    const bestTime = saveManager.getBestTime(currentStage);
+    bestText.innerText = `BEST: ${bestTime.toFixed(2)}`;
+    clearTimeResult.innerText = `TIME: ${t.toFixed(2)}s ${isNewRecord ? "(NEW RECORD!)" : ""}`;
 
     clearScreen.style.display = 'flex';
     clearTitle.style.color = "#0f0";
     clearTitle.innerText = "SYSTEM SECURED";
     nextBtn.style.display = "inline-block";
+
+    audioManager.playClear();
 
     // 6 -> 7 글리치 연출
     if (currentStage === 6) {
@@ -403,7 +549,7 @@ function resetGame() { initLevel(currentStage); }
 function nextStage() {
     currentStage++;
     checkpointActive = false;
-    if (currentStage > 7) {
+    if (currentStage > 10) {
         gameState = 'ending';
         clearScreen.style.display = 'none';
         endingScreen.style.display = 'flex';
@@ -415,10 +561,19 @@ function nextStage() {
 function restartFromBeginning() {
     currentStage = 1;
     checkpointActive = false;
-    initLevel(1);
+    showMainMenu();
 }
 
 window.addEventListener('keydown', e => {
+    if (gameState === 'menu') {
+        if (e.code === 'Space' || e.code === 'Enter') {
+            if (mainMenu.style.display !== 'none' && stageSelect.style.display === 'none') {
+                startGame(saveManager.getUnlockedStages()); // Continue from latest
+            }
+        }
+        return;
+    }
+
     if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
     if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
     if (e.code === 'ArrowUp' || e.code === 'Space') keys.up = true;
@@ -433,8 +588,14 @@ window.addEventListener('keyup', e => {
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys.dash = false;
     if (e.code === 'KeyZ') keys.attack = false;
 });
-canvas.addEventListener('mousedown', () => { if (gameState === 'playing') keys.attack = true; });
+canvas.addEventListener('mousedown', () => {
+    if (gameState === 'playing') {
+        keys.attack = true;
+        audioManager.playShoot();
+    }
+});
 canvas.addEventListener('mouseup', () => { keys.attack = false; });
 
-initLevel(1);
+// Initial Start
+showMainMenu();
 loop();

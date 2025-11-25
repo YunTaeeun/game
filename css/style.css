@@ -11,15 +11,18 @@ body {
     color: white;
     user-select: none;
 }
+
 #gameContainer {
     position: relative;
     box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
     transition: filter 0.1s;
 }
+
 canvas {
     background-color: #0a0a12;
     display: block;
 }
+
 #ui-layer {
     position: absolute;
     top: 20px;
@@ -29,23 +32,26 @@ canvas {
     display: flex;
     justify-content: space-between;
 }
+
 .hud-text {
     color: #fff;
     font-size: 20px;
     font-weight: bold;
     text-shadow: 0 0 5px #000;
 }
+
 .sub-text {
     color: #aaa;
     font-size: 14px;
 }
+
 .screen-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.9);
     display: none;
     flex-direction: column;
     justify-content: center;
@@ -54,12 +60,14 @@ canvas {
     text-align: center;
     pointer-events: auto;
 }
+
 h1 {
     text-transform: uppercase;
     letter-spacing: 5px;
     margin-bottom: 10px;
     text-shadow: 0 0 10px currentColor;
 }
+
 button {
     background: transparent;
     border: 2px solid #0ff;
@@ -71,11 +79,42 @@ button {
     transition: 0.3s;
     margin-top: 20px;
 }
+
 button:hover {
     background: #0ff;
     color: #000;
     box-shadow: 0 0 15px #0ff;
 }
+
+.stage-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #555;
+    color: #555;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: default;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 1rem;
+}
+
+.stage-btn.unlocked {
+    border-color: #0ff;
+    color: #0ff;
+    cursor: pointer;
+}
+
+.stage-btn.unlocked:hover {
+    background: #0ff;
+    color: #000;
+}
+
+.stage-btn.locked {
+    opacity: 0.3;
+}
+
 #centerMsg {
     position: absolute;
     top: 50%;
@@ -89,30 +128,62 @@ button:hover {
     opacity: 0;
     transition: opacity 0.5s;
 }
+
 #endingScreen {
     background: #000;
     color: #fff;
 }
+
 .ending-text {
     font-size: 1.5rem;
     line-height: 2;
     margin-bottom: 30px;
     animation: fadeIn 2s ease-in;
 }
+
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* 이스터에그 글리치 효과 */
 @keyframes glitch-anim {
-    0% { transform: translate(0); filter: none; }
-    20% { transform: translate(-5px, 5px); filter: invert(1) hue-rotate(90deg); }
-    40% { transform: translate(5px, -5px); filter: invert(0.5) hue-rotate(-90deg) blur(2px); }
-    60% { transform: translate(-5px, 5px); filter: invert(1); }
-    80% { transform: translate(5px, -5px); filter: hue-rotate(45deg); }
-    100% { transform: translate(0); filter: none; }
+    0% {
+        transform: translate(0);
+        filter: none;
+    }
+
+    20% {
+        transform: translate(-5px, 5px);
+        filter: invert(1) hue-rotate(90deg);
+    }
+
+    40% {
+        transform: translate(5px, -5px);
+        filter: invert(0.5) hue-rotate(-90deg) blur(2px);
+    }
+
+    60% {
+        transform: translate(-5px, 5px);
+        filter: invert(1);
+    }
+
+    80% {
+        transform: translate(5px, -5px);
+        filter: hue-rotate(45deg);
+    }
+
+    100% {
+        transform: translate(0);
+        filter: none;
+    }
 }
+
 .glitch-active {
     animation: glitch-anim 0.2s infinite;
 }
@@ -132,7 +203,8 @@ button:hover {
 .ad-sidebar {
     width: 160px;
     height: 600px;
-    display: none; /* Hidden on small screens */
+    display: none;
+    /* Hidden on small screens */
 }
 
 .ad-bottom {
@@ -146,6 +218,7 @@ button:hover {
     .ad-sidebar {
         display: flex;
     }
+
     .ad-bottom {
         display: flex;
     }
@@ -161,4 +234,12 @@ button:hover {
     display: flex;
     align-items: center;
     gap: 20px;
+}
+
+.leaderboard-row {
+    display: flex;
+    justify-content: space-between;
+    width: 300px;
+    border-bottom: 1px solid #333;
+    padding: 5px 0;
 }
