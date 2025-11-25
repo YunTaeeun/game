@@ -134,7 +134,7 @@ function showMainMenu() {
 }
 
 function startGame(stage = 1) {
-    if (stage > saveManager.getUnlockedStages()) return;
+    if (stage > saveManager.getUnlockedStages() && stage !== 0) return; // 0 is unlocked always if secret found? For now just allow if unlocked
     currentStage = stage;
     mainMenu.style.display = 'none';
     stageSelect.style.display = 'none';
@@ -153,6 +153,11 @@ function showStageSelect() {
         }
         stageButtons.appendChild(btn);
     }
+
+    // Easter Egg Button (Hidden unless unlocked or special condition)
+    // For now, let's just add a small hidden clickable area or key combo?
+    // User asked to exclude it from 1-10. Let's not show it in the grid.
+
     stageSelect.style.display = 'block';
 }
 
@@ -203,15 +208,17 @@ function initLevel(stage) {
     platforms.push({ x: 0, y: 400, w: 400, h: 50 });
     startPoint = { x: 50, y: 300, w: 50, h: 100 };
 
-    const titles = [
-        "TUTORIAL", "LONG RUN", "ORIGINS", "SKY PLATFORMS", "NO FLOOR",
-        "NIGHTMARE", "PARTY TIME!", "THE ASCENT", "VOID WALKER", "FINAL PROTOCOL"
-    ];
-    stageText.innerText = `STAGE ${stage}: ${titles[stage - 1] || "UNKNOWN"}`;
-    centerMsg.innerText = `STAGE ${stage}`;
+    const titles = {
+        1: "TUTORIAL", 2: "LONG RUN", 3: "ORIGINS", 4: "SKY PLATFORMS", 5: "NO FLOOR",
+        6: "NIGHTMARE", 7: "THE ASCENT", 8: "VOID WALKER", 9: "FINAL PROTOCOL", 10: "SYSTEM CORE",
+        0: "PARTY TIME!" // Easter Egg
+    };
+
+    stageText.innerText = `STAGE ${stage === 0 ? '???' : stage}: ${titles[stage] || "UNKNOWN"}`;
+    centerMsg.innerText = stage === 0 ? "SECRET STAGE" : `STAGE ${stage}`;
     centerMsg.style.opacity = 1;
 
-    if (stage === 7) {
+    if (stage === 0) {
         centerMsg.style.color = "#f0f"; // 핑크
         centerMsg.innerText = "BONUS STAGE!";
     } else {
@@ -314,16 +321,16 @@ function initLevel(stage) {
         platforms.push({ x: 4600, y: 400, w: 200, h: 50 });
         endPoint = { x: 4700, y: 300, w: 50, h: 100 };
     }
-    else if (stage === 7) {
-        // STAGE 7: PARTY TIME (Bonus)
+    else if (stage === 0) {
+        // STAGE 0: PARTY TIME (Easter Egg)
         platforms.push({ x: 400, y: 400, w: 2500, h: 50 });
         for (let i = 0; i < 30; i++) {
             enemies.push(new Enemy(600 + i * 80, 360, true));
         }
         endPoint = { x: 2800, y: 300, w: 50, h: 100 };
     }
-    else if (stage === 8) {
-        // THE ASCENT (Verticality)
+    else if (stage === 7) {
+        // THE ASCENT (Was 8)
         platforms.push({ x: 0, y: 400, w: 400, h: 50 });
         platforms.push({ x: 400, y: 300, w: 100, h: 20 });
         platforms.push({ x: 600, y: 200, w: 100, h: 20 });
@@ -337,8 +344,8 @@ function initLevel(stage) {
         platforms.push({ x: 1900, y: 400, w: 300, h: 50 });
         endPoint = { x: 2100, y: 300, w: 50, h: 100 };
     }
-    else if (stage === 9) {
-        // VOID WALKER (Precise jumps)
+    else if (stage === 8) {
+        // VOID WALKER (Was 9)
         platforms.push({ x: 0, y: 400, w: 200, h: 50 });
         platforms.push({ x: 300, y: 400, w: 50, h: 20 });
         platforms.push({ x: 500, y: 350, w: 50, h: 20 });
@@ -354,8 +361,8 @@ function initLevel(stage) {
         platforms.push({ x: 2200, y: 400, w: 200, h: 50 });
         endPoint = { x: 2300, y: 300, w: 50, h: 100 };
     }
-    else if (stage === 10) {
-        // FINAL PROTOCOL (Mix of everything)
+    else if (stage === 9) {
+        // FINAL PROTOCOL (Was 10)
         platforms.push({ x: 0, y: 400, w: 400, h: 50 });
         platforms.push({ x: 500, y: 350, w: 100, h: 20, moving: true, vx: 3, min: 500, max: 700 });
         enemies.push(new Enemy(520, 310));
@@ -371,6 +378,30 @@ function initLevel(stage) {
         enemies.push(new Enemy(2400, 360));
         endPoint = { x: 2500, y: 300, w: 50, h: 100 };
     }
+    else if (stage === 10) {
+        // SYSTEM CORE (New 10)
+        platforms.push({ x: 0, y: 400, w: 300, h: 50 });
+
+        // Moving platforms over void
+        platforms.push({ x: 400, y: 350, w: 50, h: 20, moving: true, vx: 4, min: 350, max: 550 });
+        platforms.push({ x: 700, y: 300, w: 50, h: 20, moving: true, vx: -4, min: 650, max: 850 });
+
+        // Enemy gauntlet
+        platforms.push({ x: 1000, y: 400, w: 600, h: 50 });
+        enemies.push(new Enemy(1100, 360));
+        enemies.push(new Enemy(1300, 360));
+        enemies.push(new Enemy(1500, 360));
+
+        // Precision wall jumps
+        platforms.push({ x: 1800, y: 200, w: 20, h: 400 });
+        platforms.push({ x: 2000, y: 0, w: 20, h: 400 });
+
+        // Final dash
+        platforms.push({ x: 2200, y: 400, w: 400, h: 50 });
+        enemies.push(new Enemy(2400, 360));
+
+        endPoint = { x: 2500, y: 300, w: 50, h: 100 };
+    }
 
     startTime = Date.now();
     gameOverScreen.style.display = 'none';
@@ -383,8 +414,8 @@ function initLevel(stage) {
 function update() {
     if (gameState !== 'playing') return;
 
-    // 파티 모드 컨페티 (7스테이지)
-    if (currentStage === 7 && frameCount % 5 === 0) {
+    // 파티 모드 컨페티 (Stage 0)
+    if (currentStage === 0 && frameCount % 5 === 0) {
         createParticles(Math.random() * 800 + cameraX, 0, 1, getRandomColor());
     }
 
@@ -514,12 +545,15 @@ function stageClear() {
     let t = (Date.now() - startTime) / 1000;
 
     // Save Data
-    const isNewRecord = saveManager.saveTime(currentStage, t);
-    saveManager.unlockStage(currentStage + 1);
-
-    const bestTime = saveManager.getBestTime(currentStage);
-    bestText.innerText = `BEST: ${bestTime.toFixed(2)}`;
-    clearTimeResult.innerText = `TIME: ${t.toFixed(2)}s ${isNewRecord ? "(NEW RECORD!)" : ""}`;
+    if (currentStage !== 0) { // Don't save progress for Easter Egg
+        const isNewRecord = saveManager.saveTime(currentStage, t);
+        saveManager.unlockStage(currentStage + 1);
+        const bestTime = saveManager.getBestTime(currentStage);
+        bestText.innerText = `BEST: ${bestTime.toFixed(2)}`;
+        clearTimeResult.innerText = `TIME: ${t.toFixed(2)}s ${isNewRecord ? "(NEW RECORD!)" : ""}`;
+    } else {
+        clearTimeResult.innerText = `TIME: ${t.toFixed(2)}s`;
+    }
 
     clearScreen.style.display = 'flex';
     clearTitle.style.color = "#0f0";
@@ -528,25 +562,20 @@ function stageClear() {
 
     audioManager.playClear();
 
-    // 6 -> 7 글리치 연출
-    if (currentStage === 6) {
-        nextBtn.style.display = "none";
-        setTimeout(() => {
-            gameContainer.classList.add('glitch-active');
-            clearScreen.style.display = 'none';
-            setTimeout(() => {
-                gameContainer.classList.remove('glitch-active');
-                currentStage++;
-                checkpointActive = false;
-                initLevel(currentStage);
-            }, 1500);
-        }, 3000);
-    }
+    // 6 -> 7 글리치 연출 (Still keep this for lore?)
+    // Maybe remove glitch transition if 7 is just a normal stage now.
+    // Let's keep it but make it less intrusive or just remove it to keep flow standard.
+    // Removing glitch transition for standard flow.
 }
 
 function resetGame() { initLevel(currentStage); }
 
 function nextStage() {
+    if (currentStage === 0) {
+        showMainMenu(); // Exit Easter Egg to menu
+        return;
+    }
+
     currentStage++;
     checkpointActive = false;
     if (currentStage > 10) {
@@ -570,6 +599,10 @@ window.addEventListener('keydown', e => {
             if (mainMenu.style.display !== 'none' && stageSelect.style.display === 'none') {
                 startGame(saveManager.getUnlockedStages()); // Continue from latest
             }
+        }
+        // Easter Egg Trigger: Press 'P' in menu
+        if (e.code === 'KeyP') {
+            startGame(0);
         }
         return;
     }
