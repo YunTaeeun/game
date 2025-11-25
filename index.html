@@ -46,7 +46,8 @@
                     <h1 class="glitch-text">NEON RUNNER<br><span style="font-size: 0.5em; color: #aaa;">GHOST
                             PROTOCOL</span></h1>
                     <div class="menu-buttons">
-                        <button onclick="startGame()">START MISSION</button>
+                        <button onclick="startGame(saveManager.getUnlockedStages())">CONTINUE MISSION</button>
+                        <button onclick="showStageSelect()">SELECT STAGE</button>
                         <button onclick="showLeaderboard()">LEADERBOARD</button>
                         <button onclick="toggleAudio()" id="audioBtn">AUDIO: ON</button>
                     </div>
