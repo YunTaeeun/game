@@ -452,7 +452,11 @@ function update() {
     enemies.forEach(e => e.update());
     bullets.forEach(b => b.update());
     particles.forEach(p => p.update());
+
+    // Cleanup inactive objects
     particles = particles.filter(p => p.life > 0);
+    bullets = bullets.filter(b => b.active);
+    enemies = enemies.filter(e => e.alive);
 
     let targetCamX = player.x - 200;
     cameraX += (targetCamX - cameraX) * 0.1;
