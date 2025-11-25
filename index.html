@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Runner: Ghost Protocol</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <div class="main-layout">
+        <div class="game-wrapper">
+            <!-- Left Sidebar Ad -->
+            <div class="ad-container ad-sidebar">
+                Ad Space<br>(160x600)
+            </div>
+
+            <div id="gameContainer">
+                <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+                <div id="ui-layer">
+                    <div>
+                        <div class="hud-text" id="stageText">STAGE 1</div>
+                        <div class="sub-text" id="dashText">DASH READY</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="hud-text" id="timerText">0.00</div>
+                        <div class="sub-text" id="bestText">BEST: --.--</div>
+                    </div>
+                </div>
+
+                <div id="centerMsg">STAGE START</div>
+
+                <div id="gameOverScreen" class="screen-overlay">
+                    <h1 style="color: #f00;">CRITICAL FAILURE</h1>
+                    <p>PRESS 'R' TO RESTART</p>
+                    <button onclick="resetGame()">REBOOT</button>
+                </div>
+
+                <div id="clearScreen" class="screen-overlay">
+                    <h1 style="color: #0f0;" id="clearTitle">SYSTEM SECURED</h1>
+                    <p id="clearTimeResult">TIME: 10.00s</p>
+                    <button id="nextBtn" onclick="nextStage()">NEXT MISSION</button>
+                </div>
+
+                <div id="endingScreen" class="screen-overlay">
+                    <h1 style="color: #0ff;">MISSION COMPLETE</h1>
+                    <div class="ending-text">
+                        GHOST PROTOCOL TERMINATED.<br>
+                        TARGETS ELIMINATED.<br>
+                        SYSTEM RESTORED.<br><br>
+                        <span style="font-size: 1rem; color: #aaa;">THANKS FOR PLAYING</span>
+                    </div>
+                    <button onclick="restartFromBeginning()">NEW GAME</button>
+                </div>
+            </div>
+
+            <!-- Right Sidebar Ad -->
+            <div class="ad-container ad-sidebar">
+                Ad Space<br>(160x600)
+            </div>
+        </div>
+
+        <!-- Bottom Banner Ad -->
+        <div class="ad-container ad-bottom">
+            Ad Space (728x90)
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/classes/Particle.js"></script>
+    <script src="js/classes/Bullet.js"></script>
+    <script src="js/classes/Enemy.js"></script>
+    <script src="js/classes/Player.js"></script>
+    <script src="js/game.js"></script>
+
+</body>
+
+</html>
